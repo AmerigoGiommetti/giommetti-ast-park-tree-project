@@ -1,0 +1,5 @@
+#Generated files not to include in the repository
+target/
+
+#Ignore possible windows database files
+Thumbs.db
