@@ -19,8 +19,7 @@ public class TreeJPARepository implements TreeRepository{
 	@Override
 	public List<Tree> findAll() {
 		TypedQuery<Tree> query = entityManager.createQuery(
-			"SELECT t FROM Tree t", Tree.class
-		);
+			"SELECT t FROM Tree t", Tree.class);
 		return query.getResultList();
 	}
 
@@ -31,25 +30,16 @@ public class TreeJPARepository implements TreeRepository{
 
 	@Override
 	public void save(Tree tree) {
-		//JPA requires transaction for writing information
-		entityManager.getTransaction().begin();
+		//The transaction is NOT competence of the repository
 		entityManager.persist(tree);
-		entityManager.getTransaction().commit();
 	}
 
 	@Override
 	public void delete(String id) {
-		entityManager.getTransaction().begin();
-		
+		//The transaction will be implemented in the level above
 		Tree tree = entityManager.find(Tree.class, id);
-		
 		if (tree != null) {
 			entityManager.remove(tree);
 		}
-		
-		entityManager.getTransaction().commit();
 	}
-	
-	
-
 }

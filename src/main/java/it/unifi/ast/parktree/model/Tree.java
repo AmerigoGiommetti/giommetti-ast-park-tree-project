@@ -11,7 +11,7 @@ import javax.persistence.Table;
 @Table(name="tree")
 public class Tree {
 	
-	@Id //primary key dor JPA
+	@Id //primary key for JPA
 	private String id;
 	private String name;
 	private boolean evergreen;
