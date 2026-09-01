@@ -5,8 +5,11 @@ import it.unifi.ast.parktree.model.Tree;
 
 public interface TreeRepository {
 	public List<Tree> findAll();
+
 	public Tree findById(String id);
+
 	public void save(Tree tree);
+
 	public void delete(String id);
 
 }

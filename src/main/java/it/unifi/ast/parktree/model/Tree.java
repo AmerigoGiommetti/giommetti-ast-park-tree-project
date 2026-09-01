@@ -8,10 +8,10 @@ import javax.persistence.Table;
 
 //JPA Annotations
 @Entity
-@Table(name="tree")
+@Table(name = "tree")
 public class Tree {
-	
-	@Id //primary key for JPA
+
+	@Id // primary key for JPA
 	private String id;
 	private String name;
 	private boolean evergreen;
@@ -23,9 +23,10 @@ public class Tree {
 		this.evergreen = evergreen;
 		this.mediumLifespan = mediumLifespan;
 	}
-	
-	//needed for JPA
-	protected Tree() {}
+
+	// needed for JPA
+	protected Tree() {
+	}
 
 	public String getId() {
 		return id;
@@ -76,7 +77,5 @@ public class Tree {
 		return evergreen == other.evergreen && Objects.equals(id, other.id) && mediumLifespan == other.mediumLifespan
 				&& Objects.equals(name, other.name);
 	}
-	
-	
 
 }
