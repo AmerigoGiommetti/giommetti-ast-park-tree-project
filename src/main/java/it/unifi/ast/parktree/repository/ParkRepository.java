@@ -5,8 +5,11 @@ import it.unifi.ast.parktree.model.Park;
 
 public interface ParkRepository {
 	public List<Park> findAll();
+
 	public Park findById(String id);
+
 	public void save(Park park);
+
 	public void delete(String id);
 
 }

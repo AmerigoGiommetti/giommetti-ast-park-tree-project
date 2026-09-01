@@ -8,15 +8,15 @@ import javax.persistence.Table;
 
 //JPA annotations
 @Entity
-@Table(name="park")
+@Table(name = "park")
 public class Park {
-	
-	@Id //primary key for JPA
+
+	@Id // primary key for JPA
 	private String id;
 	private String name;
 	private String region;
-	private double area;		//in square meters
-	private boolean freeAccess;	//does the park have a ticket that cost to enter?
+	private double area; // in square meters
+	private boolean freeAccess; // does the park have a ticket that cost to enter?
 
 	public Park(String id, String name, String region, double area, boolean freeAccess) {
 		super();
@@ -27,8 +27,9 @@ public class Park {
 		this.freeAccess = freeAccess;
 	}
 
-	//needed for JPA
-	protected Park() {}
+	// needed for JPA
+	protected Park() {
+	}
 
 	public String getId() {
 		return id;

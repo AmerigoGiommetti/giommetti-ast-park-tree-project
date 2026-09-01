@@ -7,12 +7,13 @@ import javax.persistence.EmbeddedId;
 
 @Entity
 public class ParkTreeAssociation {
-	
+
 	@EmbeddedId
 	private ParkTreeAssociationId id;
 	private int percentage;
-	
-	public ParkTreeAssociation() {}
+
+	public ParkTreeAssociation() {
+	}
 
 	public ParkTreeAssociation(ParkTreeAssociationId id, int percentage) {
 		this.id = id;

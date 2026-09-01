@@ -15,8 +15,9 @@ public class ParkTreeAssociationId implements Serializable {
 	private String parkId;
 	private String treeId;
 
-	//empty constructor need for JPA
-	public ParkTreeAssociationId() {}
+	// empty constructor need for JPA
+	public ParkTreeAssociationId() {
+	}
 
 	public ParkTreeAssociationId(String parkId, String treeId) {
 		this.parkId = parkId;
