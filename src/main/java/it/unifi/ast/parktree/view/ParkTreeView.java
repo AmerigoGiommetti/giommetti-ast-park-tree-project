@@ -6,51 +6,23 @@ import it.unifi.ast.parktree.model.Park;
 import it.unifi.ast.parktree.model.ParkTreeAssociation;
 import it.unifi.ast.parktree.model.Tree;
 
-public class ParkTreeView {
+public interface ParkTreeView {
 
-	public void showAllParks(List<Park> parks) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void showAllTrees(List<Tree> trees) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void showError(String string) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void parkAdded(Park park) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void parkDeleted(String string) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void treeAdded(Object any) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void treeDeleted(String anyString) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void showParkInfo(Park park, List<ParkTreeAssociation> associations) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void showTreeInfo(Tree tree, List<ParkTreeAssociation> associations) {
-		// TODO Auto-generated method stub
-		
-	}
-
+		public void showAllParks(List<Park> parks);
+	
+		public void showAllTrees(List<Tree> trees);
+	
+		public void showError(String string);
+	
+		public void parkAdded(Park park);
+	
+		public void parkDeleted(String string);
+	
+		public void treeAdded(Tree tree);
+	
+		public void treeDeleted(String string);
+	
+		public void showParkInfo(Park park, List<ParkTreeAssociation> associations);
+	
+		public void showTreeInfo(Tree tree, List<ParkTreeAssociation> associations);
 }
