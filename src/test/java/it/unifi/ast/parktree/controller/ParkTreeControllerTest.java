@@ -45,12 +45,37 @@ public class ParkTreeControllerTest {
 
 	@Test
 	public void testAllParksDelegatesToRepositoryAndUpdatesView() {
-		List<Park> parks = asList(new Park("0", "Maremma", "Toscana", 50, true));
+		Park park = new Park("0", "Maremma", "Toscana", 50, true);
+		List<Park> parks = asList(park);
+		List<ParkTreeAssociation> associations = asList(
+				new ParkTreeAssociation(new ParkTreeAssociationId("0", "1"), 100));
 		when(parkRepository.findAll()).thenReturn(parks);
+		when(parkRepository.findById("0")).thenReturn(park);
+		when(associationRepository.findByParkId("0")).thenReturn(associations);
 
 		parkTreeController.allParks();
 
 		verify(parkTreeView).showAllParks(parks);
+	}
+
+	@Test
+	public void testAllParksShouldLoadParkInfoForEachParkItselfWithoutDelegatingToTheView() {
+		Park park1 = new Park("1", "Maremma", "Toscana", 50, true);
+		Park park2 = new Park("2", "Cinque Terre", "Liguria", 30, false);
+		List<Park> parks = asList(park1, park2);
+		List<ParkTreeAssociation> associations1 = asList(
+				new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 100));
+		List<ParkTreeAssociation> associations2 = Collections.emptyList();
+		when(parkRepository.findAll()).thenReturn(parks);
+		when(parkRepository.findById("1")).thenReturn(park1);
+		when(parkRepository.findById("2")).thenReturn(park2);
+		when(associationRepository.findByParkId("1")).thenReturn(associations1);
+		when(associationRepository.findByParkId("2")).thenReturn(associations2);
+
+		parkTreeController.allParks();
+
+		verify(parkTreeView).showParkInfo(park1, associations1);
+		verify(parkTreeView).showParkInfo(park2, associations2);
 	}
 
 	@Test
@@ -130,6 +155,22 @@ public class ParkTreeControllerTest {
 		verify(associationRepository).save(assoc1);
 		verify(associationRepository).save(assoc2);
 		verify(parkTreeView).parkAdded(park);
+	}
+
+	@Test
+	public void testAddParkSuccessShouldAlsoLoadParkInfoItselfWithoutDelegatingToTheView() {
+		Park park = new Park("1", "Maremma", "Toscana", 50, true);
+		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
+		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 100);
+		List<ParkTreeAssociation> associations = asList(assoc1);
+		// first call (existence check) returns null, second call (parkInfo, after save) returns the saved park
+		when(parkRepository.findById("1")).thenReturn(null, park);
+		when(associationRepository.findByParkId("1")).thenReturn(associations);
+
+		parkTreeController.addPark(park, associations);
+
+		verify(parkTreeView).parkAdded(park);
+		verify(parkTreeView).showParkInfo(park, associations);
 	}
 
 	@Test

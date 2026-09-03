@@ -26,7 +26,11 @@ public class ParkTreeController {
 	}
 
 	public void allParks() {
-		parkTreeView.showAllParks(parkRepository.findAll());
+		List<Park> parks = parkRepository.findAll();
+		parkTreeView.showAllParks(parks);
+		for (Park park : parks) {
+			parkInfo(park);
+		}
 	}
 
 	public void allTrees() {
@@ -64,6 +68,7 @@ public class ParkTreeController {
 			associations.forEach(associationRepository::save);
 		}
 		parkTreeView.parkAdded(park);
+		parkInfo(park);
 	}
 
 	public void deletePark(Park park) {
