@@ -6,11 +6,14 @@ import java.util.stream.StreamSupport;
 
 import org.bson.Document;
 
+import com.google.inject.Inject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
+import it.unifi.ast.parktree.guice.AssociationCollectionName;
+import it.unifi.ast.parktree.guice.MongoDbName;
 import it.unifi.ast.parktree.model.ParkTreeAssociation;
 import it.unifi.ast.parktree.model.ParkTreeAssociationId;
 import it.unifi.ast.parktree.repository.ParkTreeAssociationRepository;
@@ -19,7 +22,9 @@ public class ParkTreeAssociationMongoRepository implements ParkTreeAssociationRe
 
 	private MongoCollection<Document> associationCollection;
 
-	public ParkTreeAssociationMongoRepository(MongoClient client, String dbName, String collectionName) {
+	@Inject
+	public ParkTreeAssociationMongoRepository(MongoClient client, @MongoDbName String dbName,
+			@AssociationCollectionName String collectionName) {
 		MongoDatabase database = client.getDatabase(dbName);
 		this.associationCollection = database.getCollection(collectionName);
 	}
@@ -32,7 +37,7 @@ public class ParkTreeAssociationMongoRepository implements ParkTreeAssociationRe
 
 	@Override
 	public void deleteByParkId(String parkId) {
-		//deleteMany because each park can have more than one association to delete
+		// deleteMany because each park can have more than one association to delete
 		associationCollection.deleteMany(Filters.eq("parkId", parkId));
 	}
 
@@ -49,10 +54,7 @@ public class ParkTreeAssociationMongoRepository implements ParkTreeAssociationRe
 	}
 
 	private ParkTreeAssociation fromDocumentToAssociation(Document d) {
-		ParkTreeAssociationId id = new ParkTreeAssociationId(
-					d.getString("parkId"),
-					d.getString("treeId")
-				);
+		ParkTreeAssociationId id = new ParkTreeAssociationId(d.getString("parkId"), d.getString("treeId"));
 		return new ParkTreeAssociation(id, d.getInteger("percentage"));
 	}
 }

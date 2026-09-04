@@ -2,6 +2,9 @@ package it.unifi.ast.parktree.controller;
 
 import java.util.List;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+
 import it.unifi.ast.parktree.model.Park;
 import it.unifi.ast.parktree.model.ParkTreeAssociation;
 import it.unifi.ast.parktree.model.Tree;
@@ -17,8 +20,9 @@ public class ParkTreeController {
 	private ParkTreeAssociationRepository associationRepository;
 	private ParkTreeView parkTreeView;
 
-	public ParkTreeController(ParkRepository parkRepository, TreeRepository treeRepository,
-			ParkTreeAssociationRepository associationRepository, ParkTreeView parkTreeView) {
+	@Inject
+	public ParkTreeController(@Assisted ParkTreeView parkTreeView, ParkRepository parkRepository,
+			TreeRepository treeRepository, ParkTreeAssociationRepository associationRepository) {
 		this.parkRepository = parkRepository;
 		this.treeRepository = treeRepository;
 		this.associationRepository = associationRepository;

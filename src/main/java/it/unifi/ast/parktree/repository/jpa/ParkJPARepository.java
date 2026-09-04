@@ -5,21 +5,23 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
+import com.google.inject.Inject;
+
 import it.unifi.ast.parktree.model.Park;
 import it.unifi.ast.parktree.repository.ParkRepository;
 
 public class ParkJPARepository implements ParkRepository {
 	private EntityManager entityManager;
 
+	@Inject
 	public ParkJPARepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
 	}
 
 	@Override
 	public List<Park> findAll() {
-		TypedQuery<Park> query = entityManager.createQuery(
-				"SELECT p FROM Park p", Park.class);
-			return query.getResultList();
+		TypedQuery<Park> query = entityManager.createQuery("SELECT p FROM Park p", Park.class);
+		return query.getResultList();
 	}
 
 	@Override
@@ -29,13 +31,13 @@ public class ParkJPARepository implements ParkRepository {
 
 	@Override
 	public void save(Park park) {
-		//The transaction will be delegated to the above layer
+		// The transaction will be delegated to the above layer
 		entityManager.persist(park);
 	}
 
 	@Override
 	public void delete(String id) {
-		//The transaction will be delegated to the above layer
+		// The transaction will be delegated to the above layer
 		Park park = entityManager.find(Park.class, id);
 		if (park != null) {
 			entityManager.remove(park);

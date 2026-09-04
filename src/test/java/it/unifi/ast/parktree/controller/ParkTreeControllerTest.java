@@ -89,6 +89,28 @@ public class ParkTreeControllerTest {
 	}
 
 	@Test
+	public void testAddParkWhenParkIsNullShouldShowErrorAndNotSave() {
+		parkTreeController.addPark(null, Collections.emptyList());
+
+		verify(parkTreeView).showError("Invalid park data");
+		verify(parkTreeView, never()).parkAdded(any());
+		verify(parkRepository, never()).save(any());
+		verifyNoInteractions(associationRepository);
+	}
+
+	@Test
+	public void testAddParkWhenParkIdIsNullShouldShowErrorAndNotSave() {
+		Park park = new Park(null, "Maremma", "Toscana", 50, true);
+
+		parkTreeController.addPark(park, Collections.emptyList());
+
+		verify(parkTreeView).showError("Invalid park data");
+		verify(parkTreeView, never()).parkAdded(any());
+		verify(parkRepository, never()).save(any());
+		verifyNoInteractions(associationRepository);
+	}
+
+	@Test
 	public void testAddParkWhenParkAlreadyExistsShouldShowErrorAndNotSave() {
 		Park existingPark = new Park("1", "Maremma", "Toscana", 50, true);
 		Park newPark = new Park("1", "Nuova Maremma", "Toscana", 60, false);
@@ -163,7 +185,8 @@ public class ParkTreeControllerTest {
 		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
 		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 100);
 		List<ParkTreeAssociation> associations = asList(assoc1);
-		// first call (existence check) returns null, second call (parkInfo, after save) returns the saved park
+		// first call (existence check) returns null, second call (parkInfo, after save)
+		// returns the saved park
 		when(parkRepository.findById("1")).thenReturn(null, park);
 		when(associationRepository.findByParkId("1")).thenReturn(associations);
 
@@ -171,6 +194,28 @@ public class ParkTreeControllerTest {
 
 		verify(parkTreeView).parkAdded(park);
 		verify(parkTreeView).showParkInfo(park, associations);
+	}
+
+	@Test
+	public void testDeleteParkWhenParkIsNullShouldShowErrorAndNotDelete() {
+		parkTreeController.deletePark(null);
+
+		verify(parkTreeView).showError("Invalid park data");
+		verify(parkTreeView, never()).parkDeleted(anyString());
+		verify(parkRepository, never()).delete(anyString());
+		verify(associationRepository, never()).deleteByParkId(anyString());
+	}
+
+	@Test
+	public void testDeleteParkWhenParkIdIsNullShouldShowErrorAndNotDelete() {
+		Park park = new Park(null, "Maremma", "Toscana", 50, true);
+
+		parkTreeController.deletePark(park);
+
+		verify(parkTreeView).showError("Invalid park data");
+		verify(parkTreeView, never()).parkDeleted(anyString());
+		verify(parkRepository, never()).delete(anyString());
+		verify(associationRepository, never()).deleteByParkId(anyString());
 	}
 
 	@Test
@@ -199,6 +244,26 @@ public class ParkTreeControllerTest {
 	}
 
 	@Test
+	public void testAddTreeWhenTreeIsNullShouldShowErrorAndNotSave() {
+		parkTreeController.addTree(null);
+
+		verify(parkTreeView).showError("Invalid tree data");
+		verify(treeRepository, never()).save(any());
+		verify(parkTreeView, never()).treeAdded(any());
+	}
+
+	@Test
+	public void testAddTreeWhenTreeIdIsNullShouldShowErrorAndNotSave() {
+		Tree tree = new Tree(null, "Faggio", false, 50);
+
+		parkTreeController.addTree(tree);
+
+		verify(parkTreeView).showError("Invalid tree data");
+		verify(treeRepository, never()).save(any());
+		verify(parkTreeView, never()).treeAdded(any());
+	}
+
+	@Test
 	public void testAddTreeWhenTreeAlreadyExistsShouldShowErrorAndNotSave() {
 		Tree existingTree = new Tree("1", "Faggio", false, 50);
 		Tree newTree = new Tree("1", "Abete Bianco", true, 80);
@@ -220,6 +285,26 @@ public class ParkTreeControllerTest {
 
 		verify(treeRepository).save(tree);
 		verify(parkTreeView).treeAdded(tree);
+	}
+
+	@Test
+	public void testDeleteTreeWhenTreeIsNullShouldShowErrorAndNotDelete() {
+		parkTreeController.deleteTree(null);
+
+		verify(parkTreeView).showError("Invalid tree data");
+		verify(treeRepository, never()).delete(anyString());
+		verify(parkTreeView, never()).treeDeleted(anyString());
+	}
+
+	@Test
+	public void testDeleteTreeWhenTreeIdIsNullShouldShowErrorAndNotDelete() {
+		Tree tree = new Tree(null, "Faggio", false, 50);
+
+		parkTreeController.deleteTree(tree);
+
+		verify(parkTreeView).showError("Invalid tree data");
+		verify(treeRepository, never()).delete(anyString());
+		verify(parkTreeView, never()).treeDeleted(anyString());
 	}
 
 	@Test
@@ -262,6 +347,26 @@ public class ParkTreeControllerTest {
 	}
 
 	@Test
+	public void testParkInfoWhenParkIsNullShouldDoNothing() {
+		parkTreeController.parkInfo(null);
+
+		verifyNoInteractions(parkRepository);
+		verifyNoInteractions(associationRepository);
+		verifyNoInteractions(parkTreeView);
+	}
+
+	@Test
+	public void testParkInfoWhenParkIdIsNullShouldDoNothing() {
+		Park park = new Park(null, "Maremma", "Toscana", 50, true);
+
+		parkTreeController.parkInfo(park);
+
+		verifyNoInteractions(parkRepository);
+		verifyNoInteractions(associationRepository);
+		verifyNoInteractions(parkTreeView);
+	}
+
+	@Test
 	public void testParkInfoShouldRetrieveAssociationsAndUpdatesView() {
 		Park park = new Park("1", "Maremma", "Toscana", 50, true);
 		ParkTreeAssociationId id = new ParkTreeAssociationId("1", "1");
@@ -284,6 +389,26 @@ public class ParkTreeControllerTest {
 		verify(parkTreeView).showError("No such park with id 1");
 		verifyNoInteractions(associationRepository);
 		verify(parkTreeView, never()).showParkInfo(any(), any());
+	}
+
+	@Test
+	public void testTreeInfoWhenTreeIsNullShouldDoNothing() {
+		parkTreeController.treeInfo(null);
+
+		verifyNoInteractions(treeRepository);
+		verifyNoInteractions(associationRepository);
+		verifyNoInteractions(parkTreeView);
+	}
+
+	@Test
+	public void testTreeInfoWhenTreeIdIsNullShouldDoNothing() {
+		Tree tree = new Tree(null, "Faggio", false, 50);
+
+		parkTreeController.treeInfo(tree);
+
+		verifyNoInteractions(treeRepository);
+		verifyNoInteractions(associationRepository);
+		verifyNoInteractions(parkTreeView);
 	}
 
 	@Test
