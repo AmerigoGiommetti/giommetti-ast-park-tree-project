@@ -11,6 +11,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.matcher.Matchers;
 
 import it.unifi.ast.parktree.controller.ParkTreeController;
 import it.unifi.ast.parktree.repository.ParkRepository;
@@ -67,6 +68,15 @@ public class ParkTreeJpaModule extends AbstractModule {
 		bind(ParkRepository.class).to(ParkJPARepository.class);
 		bind(TreeRepository.class).to(TreeJPARepository.class);
 		bind(ParkTreeAssociationRepository.class).to(ParkTreeAssociationJPARepository.class);
+
+		// the repositories persist/remove entities without managing a
+		// transaction themselves ("the level above" handles it, per their own
+		// comments); for the Guice-wired production/E2E path, this interceptor
+		// is that level above: it wraps every ParkTreeController call in a
+		// transaction (joining an already-active one for nested calls, e.g.
+		// addPark() calling parkInfo() internally)
+		bindInterceptor(Matchers.subclassesOf(ParkTreeController.class), Matchers.any(),
+				new TransactionInterceptor(getProvider(EntityManager.class)));
 
 		install(new FactoryModuleBuilder().implement(ParkTreeController.class, ParkTreeController.class)
 				.build(ParkTreeControllerFactory.class));

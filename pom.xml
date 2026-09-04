@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>it.unifi.ast</groupId>
 	<artifactId>giommetti-ast-park-tree-project</artifactId>
@@ -10,6 +12,7 @@
 
 		<assertj-core-version>3.24.2</assertj-core-version>
 		<assertj-swing-junit-version>3.17.1</assertj-swing-junit-version>
+		<coveralls-maven-plugin-version>5.1.0</coveralls-maven-plugin-version>
 		<exec-maven-plugin-version>3.6.3</exec-maven-plugin-version>
 		<guice-version>6.0.0</guice-version>
 		<h2-version>2.2.224</h2-version>
@@ -17,13 +20,35 @@
 		<jacoco-maven-plugin-version>0.8.15</jacoco-maven-plugin-version>
 		<javax.persistence-api-version>2.2</javax.persistence-api-version>
 		<junit-version>4.13.2</junit-version>
+		<maven-failsafe-plugin-version>3.6.0</maven-failsafe-plugin-version>
 		<mockito-core-version>4.11.0</mockito-core-version>
 		<mongo-java-driver-version>3.12.14</mongo-java-driver-version>
 		<mongo-java-server-version>1.44.0</mongo-java-server-version>
 		<mysql-connector-java-version>8.0.33</mysql-connector-java-version>
 		<picocli-version>4.7.7</picocli-version>
 		<pitest-maven-version>1.30.0</pitest-maven-version>
-		<testcontainers-version>1.19.7</testcontainers-version>
+		<sonar-maven-plugin-version>5.7.0.6970</sonar-maven-plugin-version>
+		<testcontainers-version>1.21.4</testcontainers-version>
+
+		<sonar.organization>amerigogiommetti</sonar.organization>
+		<sonar.projectKey>AmerigoGiommetti_giommetti-ast-park-tree-project</sonar.projectKey>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
+		<sonar.tests>
+			${project.basedir}/src/test/java,
+			${project.basedir}/src/it/java,
+			${project.basedir}/src/e2e/java
+		</sonar.tests>
+		<sonar.junit.reportPaths>
+			${project.build.directory}/surefire-reports,
+			${project.build.directory}/failsafe-reports
+		</sonar.junit.reportPaths>
+
+		<sonar.coverage.exclusions>
+			**/model/*.*,
+			**/ParkTreeSwingApp.*,
+			**/guice/**
+		</sonar.coverage.exclusions>
 	</properties>
 
 	<dependencies>
@@ -53,6 +78,12 @@
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>mongodb</artifactId>
+			<version>${testcontainers-version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mysql</artifactId>
 			<version>${testcontainers-version}</version>
 			<scope>test</scope>
 		</dependency>
@@ -126,9 +157,13 @@
 							<param>it.unifi.ast.parktree.repository.mongo.*</param>
 						</targetClasses>
 						<targetTests>
-							<param>it.unifi.ast.parktree.controller.*</param>
-							<param>it.unifi.ast.parktree.repository.jpa.*</param>
-							<param>it.unifi.ast.parktree.repository.mongo.*</param>
+							<!-- *Test only: excludes the src/it and src/e2e
+							classes
+								 (*IT / *E2E suffixes), which need Docker and would make
+								 mutation analysis prohibitively slow -->
+							<param>it.unifi.ast.parktree.controller.*Test</param>
+							<param>it.unifi.ast.parktree.repository.jpa.*Test</param>
+							<param>it.unifi.ast.parktree.repository.mongo.*Test</param>
 						</targetTests>
 						<mutators>
 							<mutator>DEFAULTS</mutator>
@@ -142,13 +177,17 @@
 					<version>${jacoco-maven-plugin-version}</version>
 					<configuration>
 						<excludes>
-							<!-- the startup class is a pure Guice/Picocli wiring
-								 orchestrator: it has no business logic to test -->
+							<!-- the startup class is a pure Guice/Picocli
+							wiring orchestrator: it has no business logic to test -->
 							<exclude>**/ParkTreeSwingApp.*</exclude>
-							<!-- the guice package only wires real infrastructure
+							<!-- the guice package only wires real
+							infrastructure
 								 (MongoClient, EntityManagerFactory) together: it is
 								 exercised by integration/E2E tests, not unit tests -->
 							<exclude>**/guice/**</exclude>
+							<!-- pure data holders: fields, generated
+							equals/hashCode, getters/setters — no hand-written logic to test -->
+							<exclude>**/model/*.*</exclude>
 						</excludes>
 					</configuration>
 					<executions>
@@ -183,6 +222,22 @@
 						</execution>
 					</executions>
 				</plugin>
+				<plugin>
+					<groupId>org.sonarsource.scanner.maven</groupId>
+					<artifactId>sonar-maven-plugin</artifactId>
+					<version>${sonar-maven-plugin-version}</version>
+				</plugin>
+				<plugin>
+					<groupId>com.github.hazendaz.maven</groupId>
+					<artifactId>coveralls-maven-plugin</artifactId>
+					<version>${coveralls-maven-plugin-version}</version>
+					<configuration>
+						<!-- the token is not hardcoded but
+						it is taken from an environmental variable
+						set by github through a github secret-->
+						<repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
+					</configuration>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 		<plugins>
@@ -200,13 +255,15 @@
 						<configuration>
 							<sources>
 								<source>src/it/java</source>
+								<source>src/e2e/java</source>
 							</sources>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
 			<plugin>
-				<!-- not bound to any lifecycle phase: it only runs when explicitly
+				<!-- not bound to any lifecycle phase: it only runs when
+				explicitly
 					 invoked with "mvn compile exec:java", it never runs as part of a
 					 normal build (e.g. "mvn verify" never starts the Swing app) -->
 				<groupId>org.codehaus.mojo</groupId>
@@ -217,6 +274,39 @@
 					<classpathScope>compile</classpathScope>
 				</configuration>
 			</plugin>
+			<plugin>
+				<!-- runs *IT.java (integration tests, src/it/java) and
+				*E2E.java
+					 (end-to-end tests, src/e2e/java) as part of "mvn verify", right
+					 after the fast unit tests: both need Docker (Testcontainers) -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>${maven-failsafe-plugin-version}</version>
+				<executions>
+					<execution>
+						<id>default-it</id>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>e2e-tests</id>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+						<configuration>
+							<excludes>
+								<exclude>**/*IT.java</exclude>
+							</excludes>
+							<includes>
+								<include>**/*E2E.java</include>
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -224,7 +314,8 @@
 		<profile>
 			<id>jacoco</id>
 			<activation>
-				<!-- Activated when the system property "skipCoverage" is not defined
+				<!-- Activated when the system property "skipCoverage" is not
+				defined
 					 at all or is defined with a value which is not "true", thus,
 					 implicitly active by default -->
 				<property>
@@ -250,7 +341,8 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
-							<!-- the Swing view tests use AssertJ Swing's GUI robot and are
+							<!-- the Swing view tests use AssertJ Swing's GUI
+							robot and are
 								 excluded from PIT: they are slow and out of scope (PIT here only
 								 targets Controller and Repository) -->
 							<excludes>
@@ -272,7 +364,8 @@
 						</executions>
 					</plugin>
 					<plugin>
-						<!-- this profile deliberately runs a reduced test suite (no
+						<!-- this profile deliberately runs a reduced test suite
+						(no
 							 Swing view tests), so JaCoCo's package coverage gate would
 							 always fail on it: skip JaCoCo entirely when running PIT -->
 						<groupId>org.jacoco</groupId>
@@ -280,6 +373,26 @@
 						<configuration>
 							<skip>true</skip>
 						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>coveralls</id>
+			<build>
+				<plugins>
+					<plugin>
+						<!-- configured in pluginManagement; jacoco is already
+                     active by default (see the "jacoco" profile above),
+                     so this profile only has to add the coveralls
+                     report, which consumes jacoco's XML report -->
+						<groupId>com.github.hazendaz.maven</groupId>
+						<artifactId>coveralls-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>verify</phase>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>
