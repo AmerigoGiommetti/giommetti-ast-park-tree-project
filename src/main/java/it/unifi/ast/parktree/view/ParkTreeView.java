@@ -8,21 +8,21 @@ import it.unifi.ast.parktree.model.Tree;
 
 public interface ParkTreeView {
 
-		public void showAllParks(List<Park> parks);
-	
-		public void showAllTrees(List<Tree> trees);
-	
-		public void showError(String string);
-	
-		public void parkAdded(Park park);
-	
-		public void parkDeleted(String string);
-	
-		public void treeAdded(Tree tree);
-	
-		public void treeDeleted(String string);
-	
-		public void showParkInfo(Park park, List<ParkTreeAssociation> associations);
-	
-		public void showTreeInfo(Tree tree, List<ParkTreeAssociation> associations);
+	public void showAllParks(List<Park> parks);
+
+	public void showAllTrees(List<Tree> trees);
+
+	public void showError(String string);
+
+	public void parkAdded(Park park);
+
+	public void parkDeleted(String string);
+
+	public void treeAdded(Tree tree);
+
+	public void treeDeleted(String string);
+
+	public void showParkInfo(Park park, List<ParkTreeAssociation> associations);
+
+	public void showTreeInfo(Tree tree, List<ParkTreeAssociation> associations);
 }

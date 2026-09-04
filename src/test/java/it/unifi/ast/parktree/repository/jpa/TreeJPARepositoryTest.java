@@ -20,31 +20,31 @@ public class TreeJPARepositoryTest {
 	private EntityManager entityManager;
 	private TreeJPARepository treeJPARepository; // SUT
 
-	//The factory gets initialized once for everything
+	// The factory gets initialized once for everything
 	@BeforeClass
 	public static void setupFactory() {
 		entityManagerFactory = Persistence.createEntityManagerFactory("h2-test");
 	}
 
-	//Closing the factory after all tests
+	// Closing the factory after all tests
 	@AfterClass
 	public static void shutdownFactory() {
 		entityManagerFactory.close();
 	}
 
-	//Setting up consistent fixture before each test
+	// Setting up consistent fixture before each test
 	@Before
 	public void setUp() {
 		entityManager = entityManagerFactory.createEntityManager();
-		
+
 		entityManager.getTransaction().begin();
 		entityManager.createQuery("DELETE FROM Tree").executeUpdate();
 		entityManager.getTransaction().commit();
-		//Injecting the entity manager dependency for the tests
+		// Injecting the entity manager dependency for the tests
 		treeJPARepository = new TreeJPARepository(entityManager);
 	}
 
-	//Closing the entity manager after each test
+	// Closing the entity manager after each test
 	@After
 	public void tearDown() {
 		entityManager.close();
@@ -67,8 +67,7 @@ public class TreeJPARepositoryTest {
 		entityManager.getTransaction().commit();
 
 		// SUT execution and assertion
-		assertThatIterable(treeJPARepository.findAll())
-			.containsExactly(tree1, tree2);
+		assertThatIterable(treeJPARepository.findAll()).containsExactly(tree1, tree2);
 	}
 
 	@Test
@@ -78,7 +77,7 @@ public class TreeJPARepositoryTest {
 
 	@Test
 	public void testFindByIdWhenDatabaseNotEmpty() {
-		//setup
+		// setup
 		Tree tree1 = new Tree("0", "pine", true, 100);
 		Tree tree2 = new Tree("1", "maple", false, 200);
 
@@ -87,58 +86,57 @@ public class TreeJPARepositoryTest {
 		entityManager.persist(tree2);
 		entityManager.getTransaction().commit();
 
-		//verify
+		// verify
 		assertThat(treeJPARepository.findById("1")).isEqualTo(tree2);
 	}
 
 	@Test
 	public void testSave() {
-		//setup
+		// setup
 		Tree tree = new Tree("0", "pine", true, 100);
 
-		//exercise
+		// exercise
 		entityManager.getTransaction().begin();
 		treeJPARepository.save(tree);
 		entityManager.getTransaction().commit();
 
-
-		//verify
+		// verify
 		Tree savedTree = entityManager.find(Tree.class, "0");
-		
+
 		assertThat(savedTree).isEqualTo(tree);
 	}
 
 	@Test
 	public void testDeleteWhenOneRecordInTheDatabase() {
-		//setup
+		// setup
 		Tree tree = new Tree("0", "pine", true, 100);
 
 		entityManager.getTransaction().begin();
 		entityManager.persist(tree);
 		entityManager.getTransaction().commit();
 
-		//exercise
+		// exercise
 		treeJPARepository.delete("0");
 
-		//verify
+		// verify
 		assertThat(entityManager.find(Tree.class, "0")).isNull();
 	}
 
 	@Test
 	public void testDeleteWhenMoreThanOneRecordInTheDatabase() {
-		//setup
+		// setup
 		Tree tree1 = new Tree("0", "pine", true, 100);
 		Tree tree2 = new Tree("1", "maple", false, 200);
 
 		entityManager.getTransaction().begin();
 		entityManager.persist(tree1);
-		entityManager.persist(tree2);		
+		entityManager.persist(tree2);
 		entityManager.getTransaction().commit();
 
-		//exercise
+		// exercise
 		treeJPARepository.delete("0");
 
-		//verify
+		// verify
 		assertThat(entityManager.find(Tree.class, "0")).isNull();
 		assertThat(entityManager.find(Tree.class, "1")).isEqualTo(tree2);
 	}

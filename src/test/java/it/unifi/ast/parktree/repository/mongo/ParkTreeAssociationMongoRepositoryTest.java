@@ -36,7 +36,7 @@ public class ParkTreeAssociationMongoRepositoryTest {
 
 	@BeforeClass
 	public static void setupServer() {
-		//starting the mongo client once and for all at the start of all the test suite
+		// starting the mongo client once and for all at the start of all the test suite
 		server = new MongoServer(new MemoryBackend());
 		InetSocketAddress serverAddress = server.bind();
 		mongoClient = new MongoClient(new ServerAddress(serverAddress));
@@ -44,48 +44,49 @@ public class ParkTreeAssociationMongoRepositoryTest {
 
 	@AfterClass
 	public static void shutdownServer() {
-		//close the mongo client after all the tests are done
+		// close the mongo client after all the tests are done
 		mongoClient.close();
 		server.shutdown();
 	}
 
 	@Before
 	public void setUp() {
-		//setting a standard isolated environment before each test
+		// setting a standard isolated environment before each test
 		database = mongoClient.getDatabase(DB_NAME);
 		database.drop();
 		associationCollection = database.getCollection(COLLECTION_NAME);
-		parkTreeAssociationMongoRepository = new ParkTreeAssociationMongoRepository(mongoClient, DB_NAME, COLLECTION_NAME);
+		parkTreeAssociationMongoRepository = new ParkTreeAssociationMongoRepository(mongoClient, DB_NAME,
+				COLLECTION_NAME);
 	}
 
 	@Test
 	public void testSave() {
-		//setup
-		ParkTreeAssociationId id = new ParkTreeAssociationId("1","1");
+		// setup
+		ParkTreeAssociationId id = new ParkTreeAssociationId("1", "1");
 		ParkTreeAssociation association = new ParkTreeAssociation(id, 45);
 
-		//exercise
+		// exercise
 		parkTreeAssociationMongoRepository.save(association);
 
-		//verify
+		// verify
 		assertThat(readAllAssociationsFromDatabase()).containsExactly(association);
 	}
 
 	@Test
 	public void testDeleteByParkIdWhenDatabaseIsEmpty() {
-		//exercise
+		// exercise
 		parkTreeAssociationMongoRepository.deleteByParkId("park1");
 
-		//verify
+		// verify
 		assertThat(readAllAssociationsFromDatabase()).isEmpty();
 	}
 
 	@Test
 	public void testDeleteByParkIdWhenNotEmptyShouldDeleteOnlyTargetParkAssociations() {
-		//setup
-		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1","1");
-		ParkTreeAssociationId id2 = new ParkTreeAssociationId("1","2");
-		ParkTreeAssociationId id = new ParkTreeAssociationId("2","1");
+		// setup
+		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
+		ParkTreeAssociationId id2 = new ParkTreeAssociationId("1", "2");
+		ParkTreeAssociationId id = new ParkTreeAssociationId("2", "1");
 		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 40);
 		ParkTreeAssociation assoc2 = new ParkTreeAssociation(id2, 60);
 		ParkTreeAssociation assocOther = new ParkTreeAssociation(id, 30);
@@ -94,10 +95,10 @@ public class ParkTreeAssociationMongoRepositoryTest {
 		addTestAssociation(assoc2);
 		addTestAssociation(assocOther);
 
-		//exercise
+		// exercise
 		parkTreeAssociationMongoRepository.deleteByParkId("1");
 
-		//verify
+		// verify
 		assertThat(readAllAssociationsFromDatabase()).containsExactly(assocOther);
 	}
 
@@ -108,10 +109,10 @@ public class ParkTreeAssociationMongoRepositoryTest {
 
 	@Test
 	public void testFindByParkIdWhenNotEmpty() {
-		//setup
-		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1","1");
-		ParkTreeAssociationId id2 = new ParkTreeAssociationId("1","2");
-		ParkTreeAssociationId id = new ParkTreeAssociationId("2","1");
+		// setup
+		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
+		ParkTreeAssociationId id2 = new ParkTreeAssociationId("1", "2");
+		ParkTreeAssociationId id = new ParkTreeAssociationId("2", "1");
 		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 40);
 		ParkTreeAssociation assoc2 = new ParkTreeAssociation(id2, 60);
 		ParkTreeAssociation assocOther = new ParkTreeAssociation(id, 30);
@@ -120,7 +121,7 @@ public class ParkTreeAssociationMongoRepositoryTest {
 		addTestAssociation(assoc2);
 		addTestAssociation(assocOther);
 
-		//verify
+		// verify
 		assertThat(parkTreeAssociationMongoRepository.findByParkId("1")).containsExactlyInAnyOrder(assoc1, assoc2);
 	}
 
@@ -131,10 +132,10 @@ public class ParkTreeAssociationMongoRepositoryTest {
 
 	@Test
 	public void testFindByTreeIdWhenNotEmpty() {
-		//setup
-		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1","1");
-		ParkTreeAssociationId id2 = new ParkTreeAssociationId("2","1");
-		ParkTreeAssociationId id = new ParkTreeAssociationId("1","2");
+		// setup
+		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
+		ParkTreeAssociationId id2 = new ParkTreeAssociationId("2", "1");
+		ParkTreeAssociationId id = new ParkTreeAssociationId("1", "2");
 		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 40);
 		ParkTreeAssociation assoc2 = new ParkTreeAssociation(id2, 60);
 		ParkTreeAssociation assocOther = new ParkTreeAssociation(id, 30);
@@ -143,20 +144,22 @@ public class ParkTreeAssociationMongoRepositoryTest {
 		addTestAssociation(assoc2);
 		addTestAssociation(assocOther);
 
-		//verify
+		// verify
 		assertThat(parkTreeAssociationMongoRepository.findByTreeId("1")).containsExactlyInAnyOrder(assoc1, assoc2);
 	}
 
 	// Helper that writes in the DB bypassing the SUT for tests in isolation
 	private void addTestAssociation(ParkTreeAssociation assoc) {
-		associationCollection.insertOne(
-				new Document().append("parkId", assoc.getId().getParkId()).append("treeId", assoc.getId().getTreeId()).append("percentage", assoc.getPercentage()));
+		associationCollection.insertOne(new Document().append("parkId", assoc.getId().getParkId())
+				.append("treeId", assoc.getId().getTreeId()).append("percentage", assoc.getPercentage()));
 	}
 
 	// Helper that reads the DB bypassing the SUT for tests in isolation
 	private List<ParkTreeAssociation> readAllAssociationsFromDatabase() {
-		return StreamSupport.stream(associationCollection.find().spliterator(), false).map(
-				d -> new ParkTreeAssociation(new ParkTreeAssociationId(d.getString("parkId"), d.getString("treeId")), d.getInteger("percentage")))
+		return StreamSupport.stream(associationCollection.find().spliterator(), false)
+				.map(d -> new ParkTreeAssociation(
+						new ParkTreeAssociationId(d.getString("parkId"), d.getString("treeId")),
+						d.getInteger("percentage")))
 				.collect(Collectors.toList());
 	}
 }

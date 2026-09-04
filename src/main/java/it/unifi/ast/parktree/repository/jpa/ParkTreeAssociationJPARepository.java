@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 
+import com.google.inject.Inject;
+
 import it.unifi.ast.parktree.model.ParkTreeAssociation;
 import it.unifi.ast.parktree.repository.ParkTreeAssociationRepository;
 
@@ -11,6 +13,7 @@ public class ParkTreeAssociationJPARepository implements ParkTreeAssociationRepo
 
 	private EntityManager entityManager;
 
+	@Inject
 	public ParkTreeAssociationJPARepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
 	}

@@ -10,14 +10,19 @@
 
 		<assertj-core-version>3.24.2</assertj-core-version>
 		<assertj-swing-junit-version>3.17.1</assertj-swing-junit-version>
+		<exec-maven-plugin-version>3.6.3</exec-maven-plugin-version>
+		<guice-version>6.0.0</guice-version>
 		<h2-version>2.2.224</h2-version>
 		<hibernate-core-version>5.6.15.Final</hibernate-core-version>
+		<jacoco-maven-plugin-version>0.8.15</jacoco-maven-plugin-version>
 		<javax.persistence-api-version>2.2</javax.persistence-api-version>
 		<junit-version>4.13.2</junit-version>
 		<mockito-core-version>4.11.0</mockito-core-version>
 		<mongo-java-driver-version>3.12.14</mongo-java-driver-version>
 		<mongo-java-server-version>1.44.0</mongo-java-server-version>
 		<mysql-connector-java-version>8.0.33</mysql-connector-java-version>
+		<picocli-version>4.7.7</picocli-version>
+		<pitest-maven-version>1.30.0</pitest-maven-version>
 		<testcontainers-version>1.19.7</testcontainers-version>
 	</properties>
 
@@ -90,9 +95,96 @@
 			<version>${assertj-swing-junit-version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>${guice-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-assistedinject</artifactId>
+			<version>${guice-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli</artifactId>
+			<version>${picocli-version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.pitest</groupId>
+					<artifactId>pitest-maven</artifactId>
+					<version>${pitest-maven-version}</version>
+					<configuration>
+						<targetClasses>
+							<param>it.unifi.ast.parktree.controller.*</param>
+							<param>it.unifi.ast.parktree.repository.jpa.*</param>
+							<param>it.unifi.ast.parktree.repository.mongo.*</param>
+						</targetClasses>
+						<targetTests>
+							<param>it.unifi.ast.parktree.controller.*</param>
+							<param>it.unifi.ast.parktree.repository.jpa.*</param>
+							<param>it.unifi.ast.parktree.repository.mongo.*</param>
+						</targetTests>
+						<mutators>
+							<mutator>DEFAULTS</mutator>
+						</mutators>
+						<mutationThreshold>100</mutationThreshold>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>${jacoco-maven-plugin-version}</version>
+					<configuration>
+						<excludes>
+							<!-- the startup class is a pure Guice/Picocli wiring
+								 orchestrator: it has no business logic to test -->
+							<exclude>**/ParkTreeSwingApp.*</exclude>
+							<!-- the guice package only wires real infrastructure
+								 (MongoClient, EntityManagerFactory) together: it is
+								 exercised by integration/E2E tests, not unit tests -->
+							<exclude>**/guice/**</exclude>
+						</excludes>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<!-- binds by default to the phase "initialize" -->
+								<goal>prepare-agent</goal>
+								<!-- binds by default to the phase "verify" -->
+								<goal>report</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>jacoco-check</id>
+							<goals>
+								<!-- binds by default to the phase "verify" -->
+								<goal>check</goal>
+							</goals>
+							<configuration>
+								<rules>
+									<rule>
+										<element>PACKAGE</element>
+										<limits>
+											<limit>
+												<counter>LINE</counter>
+												<value>COVEREDRATIO</value>
+												<minimum>0.50</minimum>
+											</limit>
+										</limits>
+									</rule>
+								</rules>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -113,6 +205,84 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<!-- not bound to any lifecycle phase: it only runs when explicitly
+					 invoked with "mvn compile exec:java", it never runs as part of a
+					 normal build (e.g. "mvn verify" never starts the Swing app) -->
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>${exec-maven-plugin-version}</version>
+				<configuration>
+					<mainClass>it.unifi.ast.parktree.app.swing.ParkTreeSwingApp</mainClass>
+					<classpathScope>compile</classpathScope>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>jacoco</id>
+			<activation>
+				<!-- Activated when the system property "skipCoverage" is not defined
+					 at all or is defined with a value which is not "true", thus,
+					 implicitly active by default -->
+				<property>
+					<name>skipCoverage</name>
+					<value>!true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<!-- configured in pluginManagement -->
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>mutation-testing</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<!-- the Swing view tests use AssertJ Swing's GUI robot and are
+								 excluded from PIT: they are slow and out of scope (PIT here only
+								 targets Controller and Repository) -->
+							<excludes>
+								<exclude>**/view/swing/*Test.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+					<plugin>
+						<!-- configured in pluginManagement -->
+						<groupId>org.pitest</groupId>
+						<artifactId>pitest-maven</artifactId>
+						<executions>
+							<execution>
+								<goals>
+									<goal>mutationCoverage</goal>
+								</goals>
+								<phase>verify</phase>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<!-- this profile deliberately runs a reduced test suite (no
+							 Swing view tests), so JaCoCo's package coverage gate would
+							 always fail on it: skip JaCoCo entirely when running PIT -->
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
