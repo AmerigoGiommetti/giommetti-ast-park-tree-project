@@ -351,6 +351,7 @@ public class ParkTreeSwingViewTest extends AssertJSwingJUnitTestCase {
 	public void testAddTreeAssociationButtonClickedTwiceShouldAddTwoRows() {
 		window.tabbedPane("tabbedPane").selectTab("Add Park");
 		window.button("addAssociationButton").click();
+		robot().waitForIdle();
 		window.button("addAssociationButton").click();
 		robot().waitForIdle();
 
@@ -364,7 +365,9 @@ public class ParkTreeSwingViewTest extends AssertJSwingJUnitTestCase {
 	public void testRemoveButtonShouldRemoveOnlyThatRow() {
 		window.tabbedPane("tabbedPane").selectTab("Add Park");
 		window.button("addAssociationButton").click();
+		robot().waitForIdle();
 		window.button("addAssociationButton").click();
+		robot().waitForIdle();
 
 		window.button("removeAssociationButton_0").click();
 		robot().waitForIdle();
