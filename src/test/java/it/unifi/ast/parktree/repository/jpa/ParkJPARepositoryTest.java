@@ -122,6 +122,22 @@ public class ParkJPARepositoryTest {
 	}
 
 	@Test
+	public void testDeleteWhenRecordDoesNotExistShouldDoNothing() {
+		// setup
+		Park park = new Park("1", "Casentino", "Toscana", 50.5, false);
+
+		entityManager.getTransaction().begin();
+		entityManager.persist(park);
+		entityManager.getTransaction().commit();
+
+		// exercise
+		parkJPARepository.delete("0");
+
+		// verify
+		assertThat(entityManager.find(Park.class, "1")).isEqualTo(park);
+	}
+
+	@Test
 	public void testDeleteWhenMoreThanOneRecordInTheDatabase() {
 		// setup
 		Park park1 = new Park("0", "Maremma", "Toscana", 50, true);

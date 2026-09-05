@@ -123,6 +123,22 @@ public class TreeJPARepositoryTest {
 	}
 
 	@Test
+	public void testDeleteWhenRecordDoesNotExistShouldDoNothing() {
+		// setup
+		Tree tree = new Tree("1", "maple", false, 200);
+
+		entityManager.getTransaction().begin();
+		entityManager.persist(tree);
+		entityManager.getTransaction().commit();
+
+		// exercise
+		treeJPARepository.delete("0");
+
+		// verify
+		assertThat(entityManager.find(Tree.class, "1")).isEqualTo(tree);
+	}
+
+	@Test
 	public void testDeleteWhenMoreThanOneRecordInTheDatabase() {
 		// setup
 		Tree tree1 = new Tree("0", "pine", true, 100);

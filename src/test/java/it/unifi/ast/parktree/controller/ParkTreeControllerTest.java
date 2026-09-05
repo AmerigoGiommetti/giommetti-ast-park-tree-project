@@ -162,6 +162,19 @@ public class ParkTreeControllerTest {
 	}
 
 	@Test
+	public void testAddParkWithNullAssociationsShouldBeTreatedAsZeroPercentageAndShowError() {
+		Park park = new Park("1", "Maremma", "Toscana", 50, true);
+		when(parkRepository.findById("1")).thenReturn(null);
+
+		parkTreeController.addPark(park, null);
+
+		verify(parkTreeView).showError("Total tree percentage must be exactly 100% (was 0%)");
+		verify(parkTreeView, never()).parkAdded(any());
+		verify(parkRepository, never()).save(any());
+		verifyNoInteractions(associationRepository);
+	}
+
+	@Test
 	public void testAddParkSuccessShouldSaveParkAndAssociationsAndUpdateView() {
 		Park park = new Park("1", "Maremma", "Toscana", 50, true);
 		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
