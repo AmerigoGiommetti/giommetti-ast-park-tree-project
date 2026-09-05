@@ -2,6 +2,8 @@ package it.unifi.ast.parktree.app.swing;
 
 import java.awt.EventQueue;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -53,7 +55,8 @@ public class ParkTreeSwingApp implements Callable<Void> {
 			try {
 				Guice.createInjector(selectModule()).getInstance(ParkTreeSwingView.class).setVisible(true);
 			} catch (Exception e) {
-				e.printStackTrace();
+				Logger.getLogger(getClass().getName())
+						.log(Level.SEVERE, "Exception", e);
 			}
 		});
 		return null;
