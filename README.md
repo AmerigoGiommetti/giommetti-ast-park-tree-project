@@ -1,7 +1,7 @@
 # Park Tree Project
 
 [![Java CI with Maven, Docker, SonarCloud and Coveralls](https://github.com/AmerigoGiommetti/giommetti-ast-park-tree-project/actions/workflows/maven.yml/badge.svg)](https://github.com/AmerigoGiommetti/giommetti-ast-park-tree-project/actions/workflows/maven.yml)
-[![Coverage Status](https://coveralls.io/repos/github/AmerigoGiommetti/giommetti-ast-park-tree-project/badge.svg?branch=main)](https://coveralls.io/github/AmerigoGiommetti/giommetti-ast-park-tree-project?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/AmerigoGiommetti/giommetti-ast-park-tree-project/badge.svg)](https://coveralls.io/github/AmerigoGiommetti/giommetti-ast-park-tree-project)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AmerigoGiommetti_giommetti-ast-park-tree-project&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=AmerigoGiommetti_giommetti-ast-park-tree-project)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=AmerigoGiommetti_giommetti-ast-park-tree-project&metric=coverage)](https://sonarcloud.io/summary/new_code?id=AmerigoGiommetti_giommetti-ast-park-tree-project)
