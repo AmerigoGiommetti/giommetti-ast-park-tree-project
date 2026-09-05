@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -19,6 +18,10 @@ import it.unifi.ast.parktree.model.ParkTreeAssociationId;
 import it.unifi.ast.parktree.repository.ParkRepository;
 import it.unifi.ast.parktree.repository.TreeRepository;
 import it.unifi.ast.parktree.repository.ParkTreeAssociationRepository;
+import it.unifi.ast.parktree.transaction.DefaultParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.ParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.TransactionCode;
+import it.unifi.ast.parktree.transaction.TransactionManager;
 import it.unifi.ast.parktree.view.ParkTreeView;
 
 public class ParkTreeControllerTest {
@@ -35,12 +38,23 @@ public class ParkTreeControllerTest {
 	@Mock
 	private ParkTreeView parkTreeView;
 
-	@InjectMocks
+	@Mock
+	private TransactionManager transactionManager;
+
 	private ParkTreeController parkTreeController; // SUT
 
 	@Before
 	public void setUp() {
 		MockitoAnnotations.openMocks(this);
+		// make sure the lambda passed to the TransactionManager is executed,
+		// using the mock repositories, exactly as if a real transaction ran
+		ParkTreeRepositories repositories = new DefaultParkTreeRepositories(parkRepository, treeRepository,
+				associationRepository);
+		when(transactionManager.doInTransaction(any())).thenAnswer(invocation -> {
+			TransactionCode<?> code = invocation.getArgument(0);
+			return code.apply(repositories);
+		});
+		parkTreeController = new ParkTreeController(parkTreeView, transactionManager);
 	}
 
 	@Test

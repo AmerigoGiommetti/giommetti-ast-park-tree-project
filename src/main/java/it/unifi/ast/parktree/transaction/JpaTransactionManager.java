@@ -1,32 +1,33 @@
-package it.unifi.ast.parktree.guice;
+package it.unifi.ast.parktree.transaction;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
-
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class TransactionInterceptor implements MethodInterceptor {
+public class JpaTransactionManager implements TransactionManager {
 
 	private final Provider<EntityManager> entityManagerProvider;
+	private final ParkTreeRepositories repositories;
 
 	@Inject
-	public TransactionInterceptor(Provider<EntityManager> entityManagerProvider) {
+	public JpaTransactionManager(Provider<EntityManager> entityManagerProvider, ParkTreeRepositories repositories) {
 		this.entityManagerProvider = entityManagerProvider;
+		this.repositories = repositories;
 	}
 
 	@Override
-	public Object invoke(MethodInvocation invocation) throws Throwable {
+	public <T> T doInTransaction(TransactionCode<T> code) {
 		EntityTransaction transaction = entityManagerProvider.get().getTransaction();
+		// join an already-active transaction instead of nesting (e.g. addPark()
+		// calling parkInfo() internally): only the outermost call owns it
 		boolean isTransactionOwner = !transaction.isActive();
 		if (isTransactionOwner) {
 			transaction.begin();
 		}
 		try {
-			Object result = invocation.proceed();
+			T result = code.apply(repositories);
 			if (isTransactionOwner) {
 				transaction.commit();
 			}

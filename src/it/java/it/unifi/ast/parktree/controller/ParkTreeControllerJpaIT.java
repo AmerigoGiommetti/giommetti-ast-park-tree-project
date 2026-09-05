@@ -33,15 +33,15 @@ import it.unifi.ast.parktree.repository.TreeRepository;
 import it.unifi.ast.parktree.repository.jpa.ParkJPARepository;
 import it.unifi.ast.parktree.repository.jpa.ParkTreeAssociationJPARepository;
 import it.unifi.ast.parktree.repository.jpa.TreeJPARepository;
+import it.unifi.ast.parktree.transaction.DefaultParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.JpaTransactionManager;
 import it.unifi.ast.parktree.view.ParkTreeView;
 
 /**
  * Mirrors {@link ParkTreeControllerMongoIT} scenario by scenario. Unlike the
- * production/E2E path (see {@code ParkTreeJpaModule}'s TransactionInterceptor),
- * here the Controller is built by hand, not by Guice, so nothing wraps its
- * calls in a transaction automatically: this test plays that role itself,
- * exactly like the existing JPA repository unit tests already do (e.g.
- * ParkJPARepositoryTest#testSave).
+ * unit tests, here the Controller is wired to a real JpaTransactionManager
+ * (see {@code ParkTreeJpaModule}), backed by a real database, so it manages
+ * its own transactions exactly as it does in production/E2E.
  */
 public class ParkTreeControllerJpaIT {
 
@@ -89,8 +89,9 @@ public class ParkTreeControllerJpaIT {
 		parkRepository = new ParkJPARepository(entityManager);
 		treeRepository = new TreeJPARepository(entityManager);
 		associationRepository = new ParkTreeAssociationJPARepository(entityManager);
-		parkTreeController = new ParkTreeController(parkTreeView, parkRepository, treeRepository,
-				associationRepository);
+		JpaTransactionManager transactionManager = new JpaTransactionManager(() -> entityManager,
+				new DefaultParkTreeRepositories(parkRepository, treeRepository, associationRepository));
+		parkTreeController = new ParkTreeController(parkTreeView, transactionManager);
 	}
 
 	@After
@@ -99,21 +100,15 @@ public class ParkTreeControllerJpaIT {
 		closeable.close();
 	}
 
-	private void inTransaction(Runnable action) {
-		entityManager.getTransaction().begin();
-		action.run();
-		entityManager.getTransaction().commit();
-	}
-
 	@Test
 	public void testAddTreeThenAddParkWithAssociationShouldPersistAcrossAllThreeRepositories() {
 		Tree tree = new Tree("1", "Faggio", false, 50);
-		inTransaction(() -> parkTreeController.addTree(tree));
+		parkTreeController.addTree(tree);
 
 		Park park = new Park("1", "Maremma", "Toscana", 50, true);
 		List<ParkTreeAssociation> associations = asList(
 				new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 100));
-		inTransaction(() -> parkTreeController.addPark(park, associations));
+		parkTreeController.addPark(park, associations);
 
 		verify(parkTreeView).showParkInfo(park, associations);
 	}
@@ -121,13 +116,13 @@ public class ParkTreeControllerJpaIT {
 	@Test
 	public void testDeleteParkShouldCascadeDeleteItsAssociations() {
 		Tree tree = new Tree("1", "Faggio", false, 50);
-		inTransaction(() -> parkTreeController.addTree(tree));
+		parkTreeController.addTree(tree);
 		Park park = new Park("1", "Maremma", "Toscana", 50, true);
 		List<ParkTreeAssociation> associations = asList(
 				new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 100));
-		inTransaction(() -> parkTreeController.addPark(park, associations));
+		parkTreeController.addPark(park, associations);
 
-		inTransaction(() -> parkTreeController.deletePark(park));
+		parkTreeController.deletePark(park);
 
 		assertThat(associationRepository.findByParkId("1")).isEmpty();
 	}
@@ -135,14 +130,14 @@ public class ParkTreeControllerJpaIT {
 	@Test
 	public void testAddParkWhenAlreadyExistsShouldShowErrorAndNotDuplicate() {
 		Tree tree = new Tree("1", "Faggio", false, 50);
-		inTransaction(() -> parkTreeController.addTree(tree));
+		parkTreeController.addTree(tree);
 		Park park = new Park("1", "Maremma", "Toscana", 50, true);
 		List<ParkTreeAssociation> associations = asList(
 				new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 100));
-		inTransaction(() -> parkTreeController.addPark(park, associations));
+		parkTreeController.addPark(park, associations);
 		Park duplicate = new Park("1", "Altro nome", "Altra regione", 10, false);
 
-		inTransaction(() -> parkTreeController.addPark(duplicate, Collections.emptyList()));
+		parkTreeController.addPark(duplicate, Collections.emptyList());
 
 		verify(parkTreeView).showError("Already existing park with id 1");
 		assertThat(parkRepository.findAll()).containsExactly(park);
@@ -151,13 +146,13 @@ public class ParkTreeControllerJpaIT {
 	@Test
 	public void testDeleteTreeAssociatedWithParkShouldBeRejected() {
 		Tree tree = new Tree("1", "Faggio", false, 50);
-		inTransaction(() -> parkTreeController.addTree(tree));
+		parkTreeController.addTree(tree);
 		Park park = new Park("1", "Maremma", "Toscana", 50, true);
 		List<ParkTreeAssociation> associations = asList(
 				new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 100));
-		inTransaction(() -> parkTreeController.addPark(park, associations));
+		parkTreeController.addPark(park, associations);
 
-		inTransaction(() -> parkTreeController.deleteTree(tree));
+		parkTreeController.deleteTree(tree);
 
 		verify(parkTreeView).showError("Cannot delete tree with id 1: associated with one or more parks");
 		assertThat(treeRepository.findById("1")).isEqualTo(tree);

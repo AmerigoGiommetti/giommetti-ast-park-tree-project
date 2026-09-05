@@ -11,7 +11,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.matcher.Matchers;
 
 import it.unifi.ast.parktree.controller.ParkTreeController;
 import it.unifi.ast.parktree.repository.ParkRepository;
@@ -20,6 +19,10 @@ import it.unifi.ast.parktree.repository.TreeRepository;
 import it.unifi.ast.parktree.repository.jpa.ParkJPARepository;
 import it.unifi.ast.parktree.repository.jpa.ParkTreeAssociationJPARepository;
 import it.unifi.ast.parktree.repository.jpa.TreeJPARepository;
+import it.unifi.ast.parktree.transaction.DefaultParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.JpaTransactionManager;
+import it.unifi.ast.parktree.transaction.ParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.TransactionManager;
 import it.unifi.ast.parktree.view.swing.ParkTreeSwingView;
 
 public class ParkTreeJpaModule extends AbstractModule {
@@ -69,14 +72,12 @@ public class ParkTreeJpaModule extends AbstractModule {
 		bind(TreeRepository.class).to(TreeJPARepository.class);
 		bind(ParkTreeAssociationRepository.class).to(ParkTreeAssociationJPARepository.class);
 
+		bind(ParkTreeRepositories.class).to(DefaultParkTreeRepositories.class);
 		// the repositories persist/remove entities without managing a
 		// transaction themselves ("the level above" handles it, per their own
-		// comments); for the Guice-wired production/E2E path, this interceptor
-		// is that level above: it wraps every ParkTreeController call in a
-		// transaction (joining an already-active one for nested calls, e.g.
-		// addPark() calling parkInfo() internally)
-		bindInterceptor(Matchers.subclassesOf(ParkTreeController.class), Matchers.any(),
-				new TransactionInterceptor(getProvider(EntityManager.class)));
+		// comments): the controller never accesses them directly, only through
+		// this TransactionManager, which owns the JPA transaction lifecycle
+		bind(TransactionManager.class).to(JpaTransactionManager.class);
 
 		install(new FactoryModuleBuilder().implement(ParkTreeController.class, ParkTreeController.class)
 				.build(ParkTreeControllerFactory.class));

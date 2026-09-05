@@ -27,7 +27,7 @@ It is built test-first (TDD) following the Model-View-Presenter pattern: a Swing
 ## Tech stack
 
 - **UI**: Java Swing
-- **Dependency Injection**: Google Guice (constructor injection, `AssistedInject` for the View→Controller factory, an AOP `MethodInterceptor` wrapping JPA repository calls in a transaction)
+- **Dependency Injection**: Google Guice (constructor injection, `AssistedInject` for the View→Controller factory, a `TransactionManager` abstraction — following the book's pattern — so the Controller never accesses repositories directly: a real transactional implementation for JPA, a no-op one for MongoDB)
 - **CLI bootstrap**: Picocli, choosing the persistence technology (JPA/MySQL or MongoDB) from command-line arguments
 - **Persistence**: JPA/Hibernate over MySQL, or the MongoDB Java driver, behind a common `Repository` interface
 - **Build**: Maven

@@ -2,17 +2,21 @@ package it.unifi.ast.parktree.repository.jpa;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceException;
 import javax.persistence.Persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import it.unifi.ast.parktree.model.Park;
 import it.unifi.ast.parktree.model.ParkTreeAssociation;
 import it.unifi.ast.parktree.model.ParkTreeAssociationId;
+import it.unifi.ast.parktree.model.Tree;
 
 public class ParkTreeAssociationJPARepositoryTest {
 
@@ -39,6 +43,8 @@ public class ParkTreeAssociationJPARepositoryTest {
 
 		entityManager.getTransaction().begin();
 		entityManager.createQuery("DELETE FROM ParkTreeAssociation").executeUpdate();
+		entityManager.createQuery("DELETE FROM Park").executeUpdate();
+		entityManager.createQuery("DELETE FROM Tree").executeUpdate();
 		entityManager.getTransaction().commit();
 		// Injecting the entity manager dependency for the tests
 		parkTreeAssociationJPARepository = new ParkTreeAssociationJPARepository(entityManager);
@@ -50,20 +56,57 @@ public class ParkTreeAssociationJPARepositoryTest {
 		entityManager.close();
 	}
 
+	// park_id/tree_id are now real foreign keys (see ParkTreeAssociation's
+	// @MapsId mappings): every association fixture needs a matching Park/Tree
+	// row already in the database, or the insert is rejected
+	private void persistPark(String id) {
+		entityManager.getTransaction().begin();
+		entityManager.persist(new Park(id, "Park " + id, "Toscana", 50, true));
+		entityManager.getTransaction().commit();
+	}
+
+	private void persistTree(String id) {
+		entityManager.getTransaction().begin();
+		entityManager.persist(new Tree(id, "Tree " + id, false, 50));
+		entityManager.getTransaction().commit();
+	}
+
+	private void saveAssociation(ParkTreeAssociation association) {
+		entityManager.getTransaction().begin();
+		parkTreeAssociationJPARepository.save(association);
+		entityManager.getTransaction().commit();
+	}
+
 	@Test
 	public void testSave() {
 		// setup
+		persistPark("1");
+		persistTree("1");
 		ParkTreeAssociationId id = new ParkTreeAssociationId("1", "1");
 		ParkTreeAssociation association = new ParkTreeAssociation(id, 45);
 
 		// exercise
-		entityManager.getTransaction().begin();
-		parkTreeAssociationJPARepository.save(association);
-		entityManager.getTransaction().commit();
+		saveAssociation(association);
 
 		// verify
 		ParkTreeAssociation saved = entityManager.find(ParkTreeAssociation.class, association.getId());
 		assertThat(saved).isEqualTo(association);
+	}
+
+	@Test
+	public void testSaveWithNonExistentParkShouldFailDueToForeignKeyConstraint() {
+		persistTree("1");
+		ParkTreeAssociation association = new ParkTreeAssociation(new ParkTreeAssociationId("missing-park", "1"), 50);
+
+		assertThatThrownBy(() -> saveAssociation(association)).isInstanceOf(PersistenceException.class);
+	}
+
+	@Test
+	public void testSaveWithNonExistentTreeShouldFailDueToForeignKeyConstraint() {
+		persistPark("1");
+		ParkTreeAssociation association = new ParkTreeAssociation(new ParkTreeAssociationId("1", "missing-tree"), 50);
+
+		assertThatThrownBy(() -> saveAssociation(association)).isInstanceOf(PersistenceException.class);
 	}
 
 	@Test
@@ -74,18 +117,17 @@ public class ParkTreeAssociationJPARepositoryTest {
 	@Test
 	public void testFindByParkIdWhenNotEmpty() {
 		// setup
-		ParkTreeAssociationId id = new ParkTreeAssociationId("0", "0");
-		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
-		ParkTreeAssociationId id2 = new ParkTreeAssociationId("1", "2");
-		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 40);
-		ParkTreeAssociation assoc2 = new ParkTreeAssociation(id2, 60);
-		ParkTreeAssociation assocOther = new ParkTreeAssociation(id, 30);
-
-		entityManager.getTransaction().begin();
-		entityManager.persist(assoc1);
-		entityManager.persist(assoc2);
-		entityManager.persist(assocOther);
-		entityManager.getTransaction().commit();
+		persistPark("0");
+		persistPark("1");
+		persistTree("0");
+		persistTree("1");
+		persistTree("2");
+		ParkTreeAssociation assoc1 = new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 40);
+		ParkTreeAssociation assoc2 = new ParkTreeAssociation(new ParkTreeAssociationId("1", "2"), 60);
+		ParkTreeAssociation assocOther = new ParkTreeAssociation(new ParkTreeAssociationId("0", "0"), 30);
+		saveAssociation(assoc1);
+		saveAssociation(assoc2);
+		saveAssociation(assocOther);
 
 		// verify
 		assertThat(parkTreeAssociationJPARepository.findByParkId("1")).containsExactlyInAnyOrder(assoc1, assoc2);
@@ -99,18 +141,17 @@ public class ParkTreeAssociationJPARepositoryTest {
 	@Test
 	public void testFindByTreeIdWhenNotEmpty() {
 		// setup
-		ParkTreeAssociationId id = new ParkTreeAssociationId("0", "0");
-		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
-		ParkTreeAssociationId id2 = new ParkTreeAssociationId("2", "1");
-		ParkTreeAssociation assocOther = new ParkTreeAssociation(id, 30);
-		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 40);
-		ParkTreeAssociation assoc2 = new ParkTreeAssociation(id2, 60);
-
-		entityManager.getTransaction().begin();
-		entityManager.persist(assoc1);
-		entityManager.persist(assoc2);
-		entityManager.persist(assocOther);
-		entityManager.getTransaction().commit();
+		persistPark("0");
+		persistPark("1");
+		persistPark("2");
+		persistTree("0");
+		persistTree("1");
+		ParkTreeAssociation assocOther = new ParkTreeAssociation(new ParkTreeAssociationId("0", "0"), 30);
+		ParkTreeAssociation assoc1 = new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 40);
+		ParkTreeAssociation assoc2 = new ParkTreeAssociation(new ParkTreeAssociationId("2", "1"), 60);
+		saveAssociation(assoc1);
+		saveAssociation(assoc2);
+		saveAssociation(assocOther);
 
 		// verify
 		assertThat(parkTreeAssociationJPARepository.findByTreeId("1")).containsExactlyInAnyOrder(assoc1, assoc2);
@@ -131,18 +172,17 @@ public class ParkTreeAssociationJPARepositoryTest {
 	@Test
 	public void testDeleteByParkIdWhenNotEmptyShouldDeleteOnlyTargetParkAssociations() {
 		// setup
-		ParkTreeAssociationId id = new ParkTreeAssociationId("0", "0");
-		ParkTreeAssociationId id1 = new ParkTreeAssociationId("1", "1");
-		ParkTreeAssociationId id2 = new ParkTreeAssociationId("1", "2");
-		ParkTreeAssociation assoc1 = new ParkTreeAssociation(id1, 40);
-		ParkTreeAssociation assoc2 = new ParkTreeAssociation(id2, 60);
-		ParkTreeAssociation assocOther = new ParkTreeAssociation(id, 30);
-
-		entityManager.getTransaction().begin();
-		entityManager.persist(assoc1);
-		entityManager.persist(assoc2);
-		entityManager.persist(assocOther);
-		entityManager.getTransaction().commit();
+		persistPark("0");
+		persistPark("1");
+		persistTree("0");
+		persistTree("1");
+		persistTree("2");
+		ParkTreeAssociation assoc1 = new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 40);
+		ParkTreeAssociation assoc2 = new ParkTreeAssociation(new ParkTreeAssociationId("1", "2"), 60);
+		ParkTreeAssociation assocOther = new ParkTreeAssociation(new ParkTreeAssociationId("0", "0"), 30);
+		saveAssociation(assoc1);
+		saveAssociation(assoc2);
+		saveAssociation(assocOther);
 
 		// exercise
 		entityManager.getTransaction().begin();

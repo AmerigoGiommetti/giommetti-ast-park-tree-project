@@ -27,6 +27,8 @@ import it.unifi.ast.parktree.repository.TreeRepository;
 import it.unifi.ast.parktree.repository.mongo.ParkMongoRepository;
 import it.unifi.ast.parktree.repository.mongo.ParkTreeAssociationMongoRepository;
 import it.unifi.ast.parktree.repository.mongo.TreeMongoRepository;
+import it.unifi.ast.parktree.transaction.DefaultParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.NoOpTransactionManager;
 import it.unifi.ast.parktree.view.ParkTreeView;
 
 public class ParkTreeControllerMongoIT {
@@ -55,8 +57,9 @@ public class ParkTreeControllerMongoIT {
 		parkRepository = new ParkMongoRepository(mongoClient, DB_NAME, "park");
 		treeRepository = new TreeMongoRepository(mongoClient, DB_NAME, "tree");
 		associationRepository = new ParkTreeAssociationMongoRepository(mongoClient, DB_NAME, "parkTreeAssociation");
-		parkTreeController = new ParkTreeController(parkTreeView, parkRepository, treeRepository,
-				associationRepository);
+		NoOpTransactionManager transactionManager = new NoOpTransactionManager(
+				new DefaultParkTreeRepositories(parkRepository, treeRepository, associationRepository));
+		parkTreeController = new ParkTreeController(parkTreeView, transactionManager);
 	}
 
 	@After
