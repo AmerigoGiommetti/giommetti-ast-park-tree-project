@@ -6,7 +6,9 @@ import javax.persistence.EntityManager;
 
 import com.google.inject.Inject;
 
+import it.unifi.ast.parktree.model.Park;
 import it.unifi.ast.parktree.model.ParkTreeAssociation;
+import it.unifi.ast.parktree.model.Tree;
 import it.unifi.ast.parktree.repository.ParkTreeAssociationRepository;
 
 public class ParkTreeAssociationJPARepository implements ParkTreeAssociationRepository {
@@ -32,6 +34,11 @@ public class ParkTreeAssociationJPARepository implements ParkTreeAssociationRepo
 
 	@Override
 	public void save(ParkTreeAssociation association) {
+		// links park_id/tree_id as real foreign keys (see @MapsId on
+		// ParkTreeAssociation): getReference is a lightweight proxy, no
+		// extra query
+		association.setPark(entityManager.getReference(Park.class, association.getId().getParkId()));
+		association.setTree(entityManager.getReference(Tree.class, association.getId().getTreeId()));
 		entityManager.persist(association);
 	}
 

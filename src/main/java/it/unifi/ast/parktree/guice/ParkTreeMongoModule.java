@@ -13,6 +13,10 @@ import it.unifi.ast.parktree.repository.TreeRepository;
 import it.unifi.ast.parktree.repository.mongo.ParkMongoRepository;
 import it.unifi.ast.parktree.repository.mongo.ParkTreeAssociationMongoRepository;
 import it.unifi.ast.parktree.repository.mongo.TreeMongoRepository;
+import it.unifi.ast.parktree.transaction.DefaultParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.NoOpTransactionManager;
+import it.unifi.ast.parktree.transaction.ParkTreeRepositories;
+import it.unifi.ast.parktree.transaction.TransactionManager;
 import it.unifi.ast.parktree.view.swing.ParkTreeSwingView;
 
 public class ParkTreeMongoModule extends AbstractModule {
@@ -52,6 +56,12 @@ public class ParkTreeMongoModule extends AbstractModule {
 		bind(ParkRepository.class).to(ParkMongoRepository.class);
 		bind(TreeRepository.class).to(TreeMongoRepository.class);
 		bind(ParkTreeAssociationRepository.class).to(ParkTreeAssociationMongoRepository.class);
+
+		bind(ParkTreeRepositories.class).to(DefaultParkTreeRepositories.class);
+		// MongoDB transactions are out of scope (per the book): the controller
+		// still only accesses repositories through the TransactionManager, but
+		// this implementation does not wrap them in an actual transaction
+		bind(TransactionManager.class).to(NoOpTransactionManager.class);
 
 		install(new FactoryModuleBuilder().implement(ParkTreeController.class, ParkTreeController.class)
 				.build(ParkTreeControllerFactory.class));

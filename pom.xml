@@ -59,11 +59,14 @@
 		     the book (Chapter "Code Quality", Section "Analysis of test code"). -->
 		<sonar.issue.ignore.multicriteria>e1,e2,e3</sonar.issue.ignore.multicriteria>
 		<sonar.issue.ignore.multicriteria.e1.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.e1.ruleKey>
-		<sonar.issue.ignore.multicriteria.e1.resourceKey>**/ParkTreeSwingViewTest.java</sonar.issue.ignore.multicriteria.e1.resourceKey>
+		<sonar.issue.ignore.multicriteria.e1.resourceKey>
+			**/ParkTreeSwingViewTest.java</sonar.issue.ignore.multicriteria.e1.resourceKey>
 		<sonar.issue.ignore.multicriteria.e2.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.e2.ruleKey>
-		<sonar.issue.ignore.multicriteria.e2.resourceKey>**/ParkTreeSwingAppJpaE2E.java</sonar.issue.ignore.multicriteria.e2.resourceKey>
+		<sonar.issue.ignore.multicriteria.e2.resourceKey>
+			**/ParkTreeSwingAppJpaE2E.java</sonar.issue.ignore.multicriteria.e2.resourceKey>
 		<sonar.issue.ignore.multicriteria.e3.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.e3.ruleKey>
-		<sonar.issue.ignore.multicriteria.e3.resourceKey>**/ParkTreeSwingAppMongoE2E.java</sonar.issue.ignore.multicriteria.e3.resourceKey>
+		<sonar.issue.ignore.multicriteria.e3.resourceKey>
+			**/ParkTreeSwingAppMongoE2E.java</sonar.issue.ignore.multicriteria.e3.resourceKey>
 	</properties>
 
 	<dependencies>
@@ -170,6 +173,7 @@
 							<param>it.unifi.ast.parktree.controller.*</param>
 							<param>it.unifi.ast.parktree.repository.jpa.*</param>
 							<param>it.unifi.ast.parktree.repository.mongo.*</param>
+							<param>it.unifi.ast.parktree.transaction.*</param>
 						</targetClasses>
 						<targetTests>
 							<!-- *Test only: excludes the src/it and src/e2e
@@ -179,6 +183,7 @@
 							<param>it.unifi.ast.parktree.controller.*Test</param>
 							<param>it.unifi.ast.parktree.repository.jpa.*Test</param>
 							<param>it.unifi.ast.parktree.repository.mongo.*Test</param>
+							<param>it.unifi.ast.parktree.transaction.*Test</param>
 						</targetTests>
 						<mutators>
 							<mutator>DEFAULTS</mutator>
@@ -208,11 +213,35 @@
 					<executions>
 						<execution>
 							<goals>
-								<!-- binds by default to the phase "initialize" -->
+								<!-- binds by default to the phase "initialize"; uses
+								     the default destFile (target/jacoco.exec) and
+								     property name ("argLine"), consumed only by
+								     surefire (see its config below) -->
 								<goal>prepare-agent</goal>
-								<!-- binds by default to the phase "verify" -->
+								<!-- binds by default to the phase "verify"; reads
+								     the same default destFile, so this report (and
+								     therefore what Coveralls/SonarCloud receive)
+								     reflects unit-test coverage only, per the book's
+								     "100% code coverage should be reached with unit
+								     tests only" -->
 								<goal>report</goal>
 							</goals>
+						</execution>
+						<execution>
+							<!-- separate agent/destFile for *IT and *E2E tests (run
+							     by failsafe): keeps their coverage out of the
+							     destFile above instead of silently appending to it,
+							     which would otherwise inflate the "unit test"
+							     coverage report with integration/e2e coverage -->
+							<id>prepare-agent-integration</id>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+							<phase>pre-integration-test</phase>
+							<configuration>
+								<destFile>${project.build.directory}/jacoco-it.exec</destFile>
+								<propertyName>failsafeArgLine</propertyName>
+							</configuration>
 						</execution>
 						<execution>
 							<id>jacoco-check</id>
@@ -228,7 +257,7 @@
 											<limit>
 												<counter>LINE</counter>
 												<value>COVEREDRATIO</value>
-												<minimum>0.9</minimum>
+												<minimum>1</minimum>
 											</limit>
 										</limits>
 									</rule>
@@ -257,20 +286,25 @@
 		</pluginManagement>
 		<plugins>
 			<plugin>
-				<!-- AssertJ Swing's internal watchdog timer (ProtectingTimerTask)
+				<!-- AssertJ Swing's internal watchdog timer
+				(ProtectingTimerTask)
 				     uses reflection to read java.util.TimerTask's private state
 				     field; the JDK module system blocks this by default and logs
 				     an InaccessibleObjectException warning on every Swing test.
 				     Re-opening java.util removes the warning without weakening
 				     anything test-relevant: it is purely internal JDK encapsulation,
 				     not an application security boundary. @{argLine} keeps
-				     JaCoCo's own -javaagent argument (injected via prepare-agent)
+				     JaCoCo's own -javaagent argument (injected via the default
+				     prepare-agent execution above, writing to target/jacoco.exec)
 				     instead of overwriting it, per JaCoCo's documented pattern for
-				     combining its argLine with custom JVM args. -->
+				     combining its argLine with custom JVM args. Only *Test classes
+				     run through surefire, so this destFile — the one "report" and
+				     "jacoco-check" read from — reflects unit-test coverage only. -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<argLine>@{argLine} --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+					<argLine>@{argLine} --add-opens
+						java.base/java.util=ALL-UNNAMED</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -309,16 +343,21 @@
 			<plugin>
 				<!-- runs *IT.java (integration tests, src/it/java) and
 				*E2E.java
-					 (end-to-end tests, src/e2e/java) as part of "mvn verify", right
-					 after the fast unit tests: both need Docker (Testcontainers) -->
+					(end-to-end tests, src/e2e/java) as part of "mvn verify", right
+					after the fast unit tests: both need Docker (Testcontainers) -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>${maven-failsafe-plugin-version}</version>
 				<configuration>
-					<!-- see the maven-surefire-plugin configuration above: the
-					     *IT and *E2E tests drive the same AssertJ Swing robot,
-					     so they hit the same java.util reflection warning. -->
-					<argLine>@{argLine} --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+					<!-- see the maven-surefire-plugin configuration above for the
+					     add-opens rationale (shared here since *IT and *E2E
+					     tests drive the same AssertJ Swing robot). @{failsafeArgLine}
+					     is the JaCoCo agent set up by the "prepare-agent-integration"
+					     execution above, deliberately different from surefire's
+					     @{argLine}/destFile so IT/E2E coverage lands in its own
+					     jacoco-it.exec instead of inflating the unit-test report. -->
+					<argLine>@{failsafeArgLine} --add-opens
+						java.base/java.util=ALL-UNNAMED</argLine>
 				</configuration>
 				<executions>
 					<execution>

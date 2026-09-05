@@ -3,3 +3,6 @@ target/
 
 #Ignore possible windows database files
 Thumbs.db
+
+#Ignore failed gui test possible images to go i the repository
+failed-gui-tests/
