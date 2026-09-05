@@ -11,7 +11,7 @@
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=AmerigoGiommetti_giommetti-ast-park-tree-project&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=AmerigoGiommetti_giommetti-ast-park-tree-project)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=AmerigoGiommetti_giommetti-ast-park-tree-project&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=AmerigoGiommetti_giommetti-ast-park-tree-project)
 
-A desktop application to manage parks, trees, and the associations between them (which trees grow in which park, and in what percentage), built as the exam project for the *Automated software testing* course, following the practices described in
+A desktop application to manage parks, trees, and the associations between them (which trees grow in which park, and in what percentage), built as the exam project for the *Automated software testing* course, following the practices described in the course book.
 
 ## Overview
 
@@ -47,7 +47,7 @@ The test suite follows the testing pyramid described in the book:
 Additional quality gates:
 
 - **Code coverage**: JaCoCo, enforced with a minimum threshold and reported to both Coveralls and SonarCloud
-- **Mutation testing**: PIT, targeting the Controller and Repository classes, run through the `mutation-testing` Maven profile
+- **Mutation testing**: PIT, targeting the Controller, Repository and Transaction classes, run through the `mutation-testing` Maven profile
 - **Static analysis**: SonarCloud, with justified exclusions documented directly in the `pom.xml`
 
 ## Building and running
