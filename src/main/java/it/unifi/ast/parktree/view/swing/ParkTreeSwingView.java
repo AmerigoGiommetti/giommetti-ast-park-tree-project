@@ -3,6 +3,7 @@ package it.unifi.ast.parktree.view.swing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -254,8 +255,17 @@ public class ParkTreeSwingView extends JFrame implements ParkTreeView {
 		JPanel southPanel = new JPanel();
 		southPanel.add(btnAddPark);
 
+		JScrollPane associationsScrollPane = new JScrollPane(associationsPanel);
+		// Without a minimum height, BorderLayout.CENTER is the only elastic
+		// region in this panel: once the form above and the button below claim
+		// their preferred size, this scroll pane can be squeezed down to a
+		// sliver (even a few rows of associations do not fit), leaving the
+		// association rows technically present but not actually visible or
+		// clickable.
+		associationsScrollPane.setPreferredSize(new Dimension(400, 120));
+
 		panel.add(formPanel, BorderLayout.NORTH);
-		panel.add(new JScrollPane(associationsPanel), BorderLayout.CENTER);
+		panel.add(associationsScrollPane, BorderLayout.CENTER);
 		panel.add(southPanel, BorderLayout.SOUTH);
 
 		return panel;
