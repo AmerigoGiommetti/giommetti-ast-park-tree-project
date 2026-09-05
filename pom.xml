@@ -49,6 +49,21 @@
 			**/ParkTreeSwingApp.*,
 			**/guice/**
 		</sonar.coverage.exclusions>
+
+		<!-- Rule "Tests should include assertions" (java:S2699) is a false
+		     positive on our AssertJ Swing-driven tests: methods like
+		     requireEnabled()/requireDisabled()/requireText() and component
+		     lookups (window.label(...)) do assert GUI state, but SonarQube's
+		     rule only recognizes JUnit/AssertJ/Mockito-style assertions, not
+		     AssertJ Swing's fixture API. Excluded per-file, as recommended in
+		     the book (Chapter "Code Quality", Section "Analysis of test code"). -->
+		<sonar.issue.ignore.multicriteria>e1,e2,e3</sonar.issue.ignore.multicriteria>
+		<sonar.issue.ignore.multicriteria.e1.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.e1.ruleKey>
+		<sonar.issue.ignore.multicriteria.e1.resourceKey>**/ParkTreeSwingViewTest.java</sonar.issue.ignore.multicriteria.e1.resourceKey>
+		<sonar.issue.ignore.multicriteria.e2.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.e2.ruleKey>
+		<sonar.issue.ignore.multicriteria.e2.resourceKey>**/ParkTreeSwingAppJpaE2E.java</sonar.issue.ignore.multicriteria.e2.resourceKey>
+		<sonar.issue.ignore.multicriteria.e3.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.e3.ruleKey>
+		<sonar.issue.ignore.multicriteria.e3.resourceKey>**/ParkTreeSwingAppMongoE2E.java</sonar.issue.ignore.multicriteria.e3.resourceKey>
 	</properties>
 
 	<dependencies>
@@ -242,6 +257,23 @@
 		</pluginManagement>
 		<plugins>
 			<plugin>
+				<!-- AssertJ Swing's internal watchdog timer (ProtectingTimerTask)
+				     uses reflection to read java.util.TimerTask's private state
+				     field; the JDK module system blocks this by default and logs
+				     an InaccessibleObjectException warning on every Swing test.
+				     Re-opening java.util removes the warning without weakening
+				     anything test-relevant: it is purely internal JDK encapsulation,
+				     not an application security boundary. @{argLine} keeps
+				     JaCoCo's own -javaagent argument (injected via prepare-agent)
+				     instead of overwriting it, per JaCoCo's documented pattern for
+				     combining its argLine with custom JVM args. -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>@{argLine} --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>3.5.0</version>
@@ -282,6 +314,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>${maven-failsafe-plugin-version}</version>
+				<configuration>
+					<!-- see the maven-surefire-plugin configuration above: the
+					     *IT and *E2E tests drive the same AssertJ Swing robot,
+					     so they hit the same java.util reflection warning. -->
+					<argLine>@{argLine} --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+				</configuration>
 				<executions>
 					<execution>
 						<id>default-it</id>
