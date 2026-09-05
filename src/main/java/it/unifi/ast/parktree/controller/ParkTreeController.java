@@ -68,9 +68,9 @@ public class ParkTreeController {
 		}
 
 		parkRepository.save(park);
-		if (associations != null) {
-			associations.forEach(associationRepository::save);
-		}
+		// null associations means totalPercentage stayed 0, which always
+		// returns above (0 != 100): reaching this point guarantees non-null.
+		associations.forEach(associationRepository::save);
 		parkTreeView.parkAdded(park);
 		parkInfo(park);
 	}
@@ -118,7 +118,9 @@ public class ParkTreeController {
 		}
 
 		List<ParkTreeAssociation> activeAssociations = associationRepository.findByTreeId(tree.getId());
-		if (activeAssociations != null && !activeAssociations.isEmpty()) {
+		// both repository implementations always return a (possibly empty)
+		// list, never null
+		if (!activeAssociations.isEmpty()) {
 			parkTreeView
 					.showError("Cannot delete tree with id " + tree.getId() + ": associated with one or more parks");
 			return;
