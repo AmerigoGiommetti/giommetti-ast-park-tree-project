@@ -338,6 +338,7 @@ public class ParkTreeSwingViewTest extends AssertJSwingJUnitTestCase {
 	public void testAddTreeAssociationButtonShouldAddANewRow() {
 		window.tabbedPane("tabbedPane").selectTab("Add Park");
 		window.button("addAssociationButton").click();
+		robot().waitForIdle();
 
 		window.comboBox("treeComboBox_0");
 		window.textBox("percentageTextBox_0");
@@ -351,6 +352,7 @@ public class ParkTreeSwingViewTest extends AssertJSwingJUnitTestCase {
 		window.tabbedPane("tabbedPane").selectTab("Add Park");
 		window.button("addAssociationButton").click();
 		window.button("addAssociationButton").click();
+		robot().waitForIdle();
 
 		window.comboBox("treeComboBox_0");
 		window.comboBox("treeComboBox_1");
@@ -365,6 +367,7 @@ public class ParkTreeSwingViewTest extends AssertJSwingJUnitTestCase {
 		window.button("addAssociationButton").click();
 
 		window.button("removeAssociationButton_0").click();
+		robot().waitForIdle();
 
 		assertThat(parkTreeSwingView.getAssociationsPanel().getComponentCount()).isEqualTo(1);
 		window.comboBox("treeComboBox_1");

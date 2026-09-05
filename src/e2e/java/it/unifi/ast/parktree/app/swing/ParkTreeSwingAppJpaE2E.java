@@ -98,6 +98,7 @@ public class ParkTreeSwingAppJpaE2E extends AssertJSwingJUnitTestCase {
 		window.textBox("parkAreaTextBox").enterText("50");
 		window.checkBox("freelyAccessibleCheckBox").check();
 		window.button("addAssociationButton").click();
+		robot().waitForIdle();
 		window.comboBox("treeComboBox_0").selectItem(0);
 		window.textBox("percentageTextBox_0").enterText("100");
 		window.button("addParkButton").click();
@@ -125,6 +126,7 @@ public class ParkTreeSwingAppJpaE2E extends AssertJSwingJUnitTestCase {
 		window.textBox("parkRegionTextBox").enterText("Toscana");
 		window.textBox("parkAreaTextBox").enterText("50");
 		window.button("addAssociationButton").click();
+		robot().waitForIdle();
 		window.comboBox("treeComboBox_0").selectItem(0);
 		window.textBox("percentageTextBox_0").enterText("100");
 		window.button("addParkButton").click();
