@@ -572,9 +572,6 @@ public class ParkTreeSwingView extends JFrame implements ParkTreeView {
 	}
 
 	private boolean isValidNonNegativeInt(String text) {
-		if (text == null) {
-			return false;
-		}
 		String trimmed = text.trim();
 		if (trimmed.isEmpty()) {
 			return false;
@@ -587,9 +584,6 @@ public class ParkTreeSwingView extends JFrame implements ParkTreeView {
 	}
 
 	private boolean isValidPositiveDouble(String text) {
-		if (text == null) {
-			return false;
-		}
 		String trimmed = text.trim();
 		if (trimmed.isEmpty()) {
 			return false;

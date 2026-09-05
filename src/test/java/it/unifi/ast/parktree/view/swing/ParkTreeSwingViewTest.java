@@ -580,4 +580,130 @@ public class ParkTreeSwingViewTest extends AssertJSwingJUnitTestCase {
 		window.comboBox("treeComboBox_0").selectItem("Faggio Rosso");
 	}
 
+	@Test
+	@GUITest
+	public void testTabChangeBeforeControllerIsSetShouldNotThrow() {
+		ParkTreeSwingView viewWithoutController = GuiActionRunner.execute(ParkTreeSwingView::new);
+		FrameFixture noControllerWindow = new FrameFixture(robot(), viewWithoutController);
+		noControllerWindow.show();
+
+		noControllerWindow.tabbedPane("tabbedPane").selectTab("All Trees");
+	}
+
+	@Test
+	@GUITest
+	public void testAddTreeButtonShouldBeDisabledWhenLifespanIsNegative() {
+		window.textBox("treeIdTextBox").enterText("1");
+		window.textBox("treeNameTextBox").enterText("Faggio");
+		window.textBox("treeLifespanTextBox").enterText("-5");
+		window.button("addTreeButton").requireDisabled();
+	}
+
+	@Test
+	@GUITest
+	public void testTreeAddedTwiceWithSameIdShouldReplaceRowNotDuplicate() {
+		Tree tree = new Tree("1", "Faggio", false, 50);
+		GuiActionRunner.execute(() -> parkTreeSwingView.treeAdded(tree));
+		robot().waitForIdle();
+
+		Tree updatedTree = new Tree("1", "Faggio Rosso", false, 55);
+		GuiActionRunner.execute(() -> parkTreeSwingView.treeAdded(updatedTree));
+		robot().waitForIdle();
+
+		window.tabbedPane("tabbedPane").selectTab("All Trees");
+		assertThat(parkTreeSwingView.getTreesListPanel().getComponentCount()).isEqualTo(1);
+		assertThat(window.label("treeRowLabel_1").text()).contains("Faggio Rosso");
+	}
+
+	@Test
+	@GUITest
+	public void testParkAddedTwiceWithSameIdShouldReplaceRowNotDuplicate() {
+		Park park = new Park("1", "Maremma", "Toscana", 50, true);
+		GuiActionRunner.execute(() -> parkTreeSwingView.parkAdded(park));
+		robot().waitForIdle();
+
+		Park updatedPark = new Park("1", "Maremma Nuova", "Toscana", 60, false);
+		GuiActionRunner.execute(() -> parkTreeSwingView.parkAdded(updatedPark));
+		robot().waitForIdle();
+
+		window.tabbedPane("tabbedPane").selectTab("All Parks");
+		assertThat(parkTreeSwingView.getParksListPanel().getComponentCount()).isEqualTo(1);
+		assertThat(window.label("parkRowLabel_1").text()).contains("Maremma Nuova");
+	}
+
+	@Test
+	@GUITest
+	public void testParkDeletedForUnknownIdShouldNotThrow() {
+		GuiActionRunner.execute(() -> parkTreeSwingView.parkDeleted("unknown"));
+		robot().waitForIdle();
+
+		window.label("errorMessageLabel").requireText(" ");
+	}
+
+	@Test
+	@GUITest
+	public void testTreeDeletedForUnknownIdShouldNotThrow() {
+		GuiActionRunner.execute(() -> parkTreeSwingView.treeDeleted("unknown"));
+		robot().waitForIdle();
+
+		window.label("errorMessageLabel").requireText(" ");
+	}
+
+	@Test
+	@GUITest
+	public void testShowParkInfoForParkWithNoLabelYetShouldNotThrow() {
+		Park park = new Park("1", "Maremma", "Toscana", 50, true);
+		List<ParkTreeAssociation> associations = asList(
+				new ParkTreeAssociation(new ParkTreeAssociationId("1", "1"), 100));
+
+		GuiActionRunner.execute(() -> parkTreeSwingView.showParkInfo(park, associations));
+		robot().waitForIdle();
+
+		assertThat(parkTreeSwingView.getParksListPanel().getComponentCount()).isZero();
+	}
+
+	@Test
+	@GUITest
+	public void testShowParkInfoWithNullAssociationsShouldClearLabel() {
+		Park park = new Park("1", "Maremma", "Toscana", 50, true);
+		window.tabbedPane("tabbedPane").selectTab("All Parks");
+		GuiActionRunner.execute(() -> parkTreeSwingView.showAllParks(asList(park)));
+		robot().waitForIdle();
+
+		GuiActionRunner.execute(() -> parkTreeSwingView.showParkInfo(park, null));
+		robot().waitForIdle();
+
+		window.label("parkAssociationsLabel_1").requireText(" ");
+	}
+
+	@Test
+	@GUITest
+	public void testShowParkInfoWithEmptyAssociationsShouldClearLabel() {
+		Park park = new Park("1", "Maremma", "Toscana", 50, true);
+		window.tabbedPane("tabbedPane").selectTab("All Parks");
+		GuiActionRunner.execute(() -> parkTreeSwingView.showAllParks(asList(park)));
+		robot().waitForIdle();
+
+		GuiActionRunner.execute(() -> parkTreeSwingView.showParkInfo(park, Collections.emptyList()));
+		robot().waitForIdle();
+
+		window.label("parkAssociationsLabel_1").requireText(" ");
+	}
+
+	@Test
+	@GUITest
+	public void testShowParkInfoWithUnknownTreeIdShouldFallBackToRawTreeId() {
+		Park park = new Park("1", "Maremma", "Toscana", 50, true);
+		window.tabbedPane("tabbedPane").selectTab("All Parks");
+		GuiActionRunner.execute(() -> parkTreeSwingView.showAllParks(asList(park)));
+		robot().waitForIdle();
+
+		List<ParkTreeAssociation> associations = asList(
+				new ParkTreeAssociation(new ParkTreeAssociationId("1", "unknownTreeId"), 100));
+		GuiActionRunner.execute(() -> parkTreeSwingView.showParkInfo(park, associations));
+		robot().waitForIdle();
+
+		assertThat(window.label("parkAssociationsLabel_1").text()).contains("unknownTreeId").contains("100%");
+	}
+
 }
